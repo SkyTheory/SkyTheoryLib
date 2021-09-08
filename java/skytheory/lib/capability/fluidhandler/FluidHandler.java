@@ -33,14 +33,6 @@ public class FluidHandler extends FluidTank implements INBTSerializable<NBTTagCo
 		this.listeners = new ArrayList<>();
 	}
 
-	public boolean canFill() {
-		return canFill;
-	}
-
-	public boolean canDrain() {
-		return canDrain;
-	}
-
 	public void setCanFill(boolean canFill) {
 		super.setCanFill(canFill);
 		this.canFillFluidType = null;

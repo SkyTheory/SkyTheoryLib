@@ -1,5 +1,6 @@
 package skytheory.lib.event;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -9,6 +10,8 @@ import skytheory.lib.SkyTheoryLib;
 import skytheory.lib.capability.DataProvider;
 import skytheory.lib.capability.datasync.DataSyncHandler;
 import skytheory.lib.capability.datasync.IDataSync;
+import skytheory.lib.item.IItemInventory;
+import skytheory.lib.item.IItemTank;
 import skytheory.lib.tile.ITileInventory;
 import skytheory.lib.tile.ITileTank;
 
@@ -34,6 +37,19 @@ public class CapabilityEvent {
 			DataSyncHandler data = new DataSyncHandler(sync);
 			ICapabilityProvider provider = new DataProvider<DataSyncHandler>(DataSyncHandler.SYNC_DATA_CAPABILITY, data);
 			event.addCapability(KEY_SYNC, provider);
+		}
+	}
+
+	@SubscribeEvent
+	public static void onAttachCapabilityItemEvent(AttachCapabilitiesEvent<ItemStack> event) {
+		ItemStack stack = event.getObject();
+		if (stack.getItem() instanceof IItemInventory) {
+			ICapabilityProvider provider = ((IItemInventory) stack.getItem()).createInventoryProvider();
+			event.addCapability(KEY_INVENTORY, provider);
+		}
+		if (stack.getItem() instanceof IItemTank) {
+			ICapabilityProvider provider = ((IItemTank) stack.getItem()).createFluidProvider();
+			event.addCapability(KEY_FLUID, provider);
 		}
 	}
 

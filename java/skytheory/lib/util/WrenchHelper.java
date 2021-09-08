@@ -71,7 +71,11 @@ public class WrenchHelper {
 		EnumFacing current = state.getValue(property);
 		EnumFacing next = side;
 		if (current == next) next = next.getOpposite();
-		if (property.getAllowedValues().contains(next)) setProperty(world, pos, state, property, next);
+		if (property.getAllowedValues().contains(next)) {
+			setProperty(world, pos, state, property, next);
+		} else if (property.getAllowedValues().contains(next.getOpposite())) {
+			setProperty(world, pos, state, property, next.getOpposite());
+		}
 	}
 
 	public static void cycleProperty(World world, BlockPos pos, IProperty<?> property) {

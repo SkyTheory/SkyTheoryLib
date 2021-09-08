@@ -120,7 +120,7 @@ public class MultiFluidHandler implements IFluidHandler {
 			this.specific = specific.copy();
 			this.specific.amount = maxDrain;
 			FluidStack result = this.drainInternal(specific, doDrain);
-			if (doDrain) this.specific = null;
+			this.specific = null;
 			return result;
 		}
 	}

@@ -149,7 +149,7 @@ public class ItemHandlerUtils {
 	public static ItemHandler copyOf(IItemHandler handler) {
 		ItemHandler result = new ItemHandler(handler.getSlots());
 		for (SlotProperties prop : iterator(handler)) {
-			result.setStackInSlot(prop.index, prop.getStack());
+			result.setStackInSlot(prop.index, prop.getStack().copy());
 			result.setSlotLimit(prop.index, prop.getSlotLimit());
 		}
 		return result;
