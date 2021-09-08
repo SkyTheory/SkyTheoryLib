@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.INBTSerializable;
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTankInfo;
 import net.minecraftforge.fluids.IFluidTank;
@@ -18,7 +19,11 @@ public class FluidHandlerInfinite implements IFluidTank, IFluidHandler, INBTSeri
 	public final IFluidTankProperties[] prop;
 
 	public FluidHandlerInfinite() {
-		this(null);
+		this((FluidStack) null);
+	}
+
+	public FluidHandlerInfinite(@Nullable Fluid fluid) {
+		this(new FluidStack(fluid, Integer.MAX_VALUE));
 	}
 
 	public FluidHandlerInfinite(@Nullable FluidStack stack) {
@@ -69,6 +74,10 @@ public class FluidHandlerInfinite implements IFluidTank, IFluidHandler, INBTSeri
 		FluidStack result = fluid.copy();
 		result.amount = maxDrain;
 		return result;
+	}
+
+	public void setFluid(Fluid fluid) {
+		this.fluid = new FluidStack(fluid, Integer.MAX_VALUE);
 	}
 
 	public void setFluid(FluidStack fluid) {
