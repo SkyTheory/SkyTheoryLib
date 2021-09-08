@@ -1,10 +1,16 @@
 package skytheory.lib.capability.fluidhandler;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidEvent;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidTankInfo;
 import net.minecraftforge.fluids.IFluidTank;
@@ -13,10 +19,12 @@ import net.minecraftforge.fluids.capability.IFluidTankProperties;
 
 public class FluidHandlerInfinite implements IFluidTank, IFluidHandler, INBTSerializable<NBTTagCompound> {
 
-	public static final String KEY_EMPTY = "Empty";
-
-	public FluidStack fluid;
-	public final IFluidTankProperties[] prop;
+	private final IFluidTankProperties[] prop;
+	private final List<IFluidHandlerChangedListener> listeners;
+	private FluidStack fluid;
+	private TileEntity tile;
+	private Predicate<FluidStack> canFill;
+	private Predicate<FluidStack> canDrain;
 
 	public FluidHandlerInfinite() {
 		this((FluidStack) null);
@@ -28,7 +36,23 @@ public class FluidHandlerInfinite implements IFluidTank, IFluidHandler, INBTSeri
 
 	public FluidHandlerInfinite(@Nullable FluidStack stack) {
 		this.fluid = stack;
-		this.prop = new IFluidTankProperties[] {new FluidInfiniteProperty(stack)};
+		this.prop = new IFluidTankProperties[] {new FluidInfiniteProperty(this)};
+		this.listeners = new ArrayList<>();
+	}
+
+	public FluidHandlerInfinite setCanFill(Predicate<FluidStack> canFill) {
+		this.canFill = canFill;
+		return this;
+	}
+
+	public FluidHandlerInfinite setCanDrain(Predicate<FluidStack> canDrain) {
+		this.canDrain = canDrain;
+		return this;
+	}
+
+	public FluidHandlerInfinite setTileEntity(TileEntity tile) {
+		this.tile = tile;
+		return this;
 	}
 
 	@Override
@@ -59,21 +83,38 @@ public class FluidHandlerInfinite implements IFluidTank, IFluidHandler, INBTSeri
 	@Override
 	public int fill(FluidStack resource, boolean doFill) {
 		if (resource == null) return 0;
+		if (resource.amount == 0) return 0;
+		if (canFill != null && !canFill.test(resource)) return 0;
 		if (fluid != null && !fluid.isFluidEqual(resource)) return 0;
+		int result = resource.amount;
+		if (!doFill) return result;
+		this.onContentsChanged();
+		if (tile != null) {
+			FluidEvent.fireEvent(new FluidEvent.FluidFillingEvent(fluid, tile.getWorld(), tile.getPos(), this, result));
+		}
 		return resource.amount;
 	}
 
 	@Override
 	public FluidStack drain(FluidStack resource, boolean doDrain) {
+		if (resource == null) return null;
+		if (resource.amount == 0) return null;
 		if (fluid == null || !fluid.isFluidEqual(resource)) return null;
-		return resource.copy();
+		if (canDrain != null && !canDrain.test(resource)) return null;
+		FluidStack result = resource.copy();
+		if (!doDrain) return result;
+		this.onContentsChanged();
+		if (tile != null) {
+			FluidEvent.fireEvent(new FluidEvent.FluidDrainingEvent(fluid, tile.getWorld(), tile.getPos(), this, result.amount));
+		}
+		return result;
 	}
 
 	@Override
 	public FluidStack drain(int maxDrain, boolean doDrain) {
-		FluidStack result = fluid.copy();
-		result.amount = maxDrain;
-		return result;
+		FluidStack toDrain = fluid.copy();
+		toDrain.amount = maxDrain;
+		return drain(toDrain, doDrain);
 	}
 
 	public void setFluid(Fluid fluid) {
@@ -82,6 +123,16 @@ public class FluidHandlerInfinite implements IFluidTank, IFluidHandler, INBTSeri
 
 	public void setFluid(FluidStack fluid) {
 		this.fluid = fluid;
+	}
+
+	public FluidHandlerInfinite addListener(IFluidHandlerChangedListener listener) {
+		if (this.listeners.contains(listener)) return this;
+		this.listeners.add(listener);
+		return this;
+	}
+
+	public void onContentsChanged() {
+		this.listeners.forEach(l -> l.onFluidHandlerChanged(this));
 	}
 
 	@Override
@@ -98,17 +149,17 @@ public class FluidHandlerInfinite implements IFluidTank, IFluidHandler, INBTSeri
 		this.fluid = FluidStack.loadFluidStackFromNBT(nbt);
 	}
 
-	public static class FluidInfiniteProperty implements IFluidTankProperties {
+	protected static class FluidInfiniteProperty implements IFluidTankProperties {
 
-		FluidStack fluid;
+		FluidHandlerInfinite handler;
 
-		public FluidInfiniteProperty(FluidStack stack) {
-			this.fluid = stack;
+		public FluidInfiniteProperty(FluidHandlerInfinite handler) {
+			this.handler = handler;
 		}
 
 		@Override
 		public FluidStack getContents() {
-			return fluid;
+			return handler.getFluid();
 		}
 
 		@Override
@@ -129,14 +180,17 @@ public class FluidHandlerInfinite implements IFluidTank, IFluidHandler, INBTSeri
 		@Override
 		public boolean canFillFluidType(FluidStack fluidStack) {
 			if (fluidStack == null) return false;
-			if (fluid == null) return true;
-			return fluid.isFluidEqual(fluidStack);
+			if (handler.getFluid() == null) return true;
+			if (handler.canFill != null && !handler.canFill.test(fluidStack)) return false;
+			return handler.getFluid().isFluidEqual(fluidStack);
 		}
 
 		@Override
 		public boolean canDrainFluidType(FluidStack fluidStack) {
-			return fluid != null && fluid.isFluidEqual(fluidStack);
+			if (handler.canDrain != null && !handler.canDrain.test(fluidStack)) return false;
+			return handler.getFluid() != null && handler.getFluid().isFluidEqual(fluidStack);
 		}
 
 	}
+
 }
