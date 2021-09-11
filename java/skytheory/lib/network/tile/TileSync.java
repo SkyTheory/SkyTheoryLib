@@ -17,6 +17,15 @@ public class TileSync {
 	 * サーバーにデータ同期を要求する
 	 * @param tile
 	 * @param cap
+	 */
+	public static void request(TileEntity tile, Capability<?> cap) {
+		request(tile, cap, FacingUtils.SET_SINGLE_NULL);
+	}
+
+	/**
+	 * サーバーにデータ同期を要求する
+	 * @param tile
+	 * @param cap
 	 * @param facings
 	 */
 	public static void request(TileEntity tile, Capability<?> cap, Set<EnumFacing> facings) {

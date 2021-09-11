@@ -65,6 +65,8 @@ public class MultiFluidHandler implements IFluidHandler {
 		FluidStack result = drainInternal(resource, doDrain);
 		if (!doDrain) {
 			this.specific = result;
+		} else {
+			this.specific = null;
 		}
 		return result;
 	}

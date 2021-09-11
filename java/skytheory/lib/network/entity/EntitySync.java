@@ -17,6 +17,15 @@ public class EntitySync {
 	 * サーバーにデータ同期を要求する
 	 * @param entity
 	 * @param cap
+	 */
+	public static void request(Entity entity, Capability<?> cap) {
+		request(entity, cap, FacingUtils.SET_SINGLE_NULL);
+	}
+
+	/**
+	 * サーバーにデータ同期を要求する
+	 * @param entity
+	 * @param cap
 	 * @param facings
 	 */
 	public static void request(Entity entity, Capability<?> cap, Set<EnumFacing> facings) {
