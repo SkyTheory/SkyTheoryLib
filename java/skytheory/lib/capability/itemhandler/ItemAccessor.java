@@ -7,6 +7,9 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.Validate;
 
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.items.IItemHandler;
 
 /**
@@ -15,7 +18,7 @@ import net.minecraftforge.items.IItemHandler;
  * @author SkyTheory
  *
  */
-public class ItemAccessor implements IItemHandler {
+public class ItemAccessor implements IItemHandler, INBTSerializable<NBTBase> {
 
 	public final IItemHandler handler;
 
@@ -37,7 +40,7 @@ public class ItemAccessor implements IItemHandler {
 		if (handler.length == 1) {
 			this.handler = handler[0];
 		} else {
-			this.handler = new MultiItemHandler(handler);
+			this.handler = new MultiItemHandlerSerializable(handler);
 		}
 	}
 
@@ -106,6 +109,23 @@ public class ItemAccessor implements IItemHandler {
 	public ItemAccessor setCanExtract(BiPredicate<Integer, ItemStack> canExtract) {
 		this.canExtract = canExtract;
 		return this;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public NBTBase serializeNBT() {
+		if (this.handler instanceof INBTSerializable) {
+			return ((INBTSerializable<NBTBase>) handler).serializeNBT();
+		}
+		return new NBTTagCompound();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void deserializeNBT(NBTBase nbt) {
+		if (this.handler instanceof INBTSerializable) {
+			((INBTSerializable<NBTBase>) handler).deserializeNBT(nbt);
+		}
 	}
 
 }

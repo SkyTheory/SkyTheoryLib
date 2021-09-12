@@ -2,6 +2,8 @@ package skytheory.lib.container;
 
 import java.util.function.Predicate;
 
+import javax.annotation.Nonnull;
+
 import com.google.common.base.Predicates;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,6 +12,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 
 public class SlotItemHandler extends net.minecraftforge.items.SlotItemHandler {
 
@@ -58,6 +61,24 @@ public class SlotItemHandler extends net.minecraftforge.items.SlotItemHandler {
 	@Override
 	public boolean canTakeStack(EntityPlayer player) {
 		return takable.test(player);
+	}
+
+	@Override
+	@Nonnull
+	public ItemStack decrStackSize(int amount) {
+		if (handler instanceof IItemHandlerModifiable) {
+			IItemHandlerModifiable mhandler = (IItemHandlerModifiable) handler;
+			ItemStack slotin =  mhandler.getStackInSlot(index).copy();
+			ItemStack result = slotin.splitStack(amount);
+			// 覚書：ItemStackHandler.onContentsChangedを呼ぶための処理
+			if (slotin.isEmpty()) {
+				mhandler.setStackInSlot(index, ItemStack.EMPTY);
+			} else {
+				mhandler.setStackInSlot(index, slotin);
+			}
+			return result;
+		}
+		return super.decrStackSize(amount);
 	}
 
 	@Override
