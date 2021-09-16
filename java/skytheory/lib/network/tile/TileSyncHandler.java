@@ -1,6 +1,5 @@
 package skytheory.lib.network.tile;
 
-import java.util.Objects;
 import java.util.Set;
 
 import net.minecraft.client.Minecraft;
@@ -31,12 +30,13 @@ public class TileSyncHandler {
 			TileEntity tile = ctx.getServerHandler().player.world.getTileEntity(pos);
 			Capability<?> cap = CapsSyncManager.lookup(message.capId);
 			Set<EnumFacing> facings = FacingUtils.fromBitFlags(message.bitflag);
-			if (Objects.isNull(tile)) {
+			if (tile != null && tile.hasWorld()) {
+				// Server側のEntityのデータを送信する
+				return new TileSyncRespond(queueId, tile, cap, facings);
+			} else {
 				// TileEntityが見つからない場合などはこちら
 				return new TileSyncMissing(queueId);
 			}
-			// Server側のEntityのデータを送信する
-			return new TileSyncRespond(queueId, tile, cap, facings);
 		}
 	}
 
@@ -46,8 +46,8 @@ public class TileSyncHandler {
 			// クライアント側でデータを受け取り、IDからTileEntityの実体を取得する
 			BlockPos pos = new BlockPos(message.x, message.y, message.z);
 			TileEntity tile = Minecraft.getMinecraft().player.world.getTileEntity(pos);
-			if (tile != null) {
-				Capability<?> cap = CapsSyncManager.lookup(message.capId);
+			Capability<?> cap = CapsSyncManager.lookup(message.capId);
+			if (tile != null && tile.hasWorld()) {
 				TileSyncManager.process(message.queueId, tile, cap, message.compound);
 			} else {
 				// 覚書：リクエスト後、データが帰ってくる前にClientのTileEntityがアンロードされた場合
@@ -71,7 +71,7 @@ public class TileSyncHandler {
 		public IMessage onMessage(TileSyncMessage message, MessageContext ctx) {
 			BlockPos pos = new BlockPos(message.x, message.y, message.z);
 			TileEntity tile = Minecraft.getMinecraft().player.world.getTileEntity(pos);
-			if (tile != null) {
+			if (tile != null && tile.hasWorld()) {
 				Capability<?> cap = CapsSyncManager.lookup(message.capId);
 				CapsSyncManager.sync(tile, cap, message.compound);
 			}
@@ -84,7 +84,7 @@ public class TileSyncHandler {
 		public IMessage onMessage(TileSyncMessage message, MessageContext ctx) {
 			BlockPos pos = new BlockPos(message.x, message.y, message.z);
 			TileEntity tile = ctx.getServerHandler().player.world.getTileEntity(pos);
-			if (tile != null) {
+			if (tile != null && tile.hasWorld()) {
 				Capability<?> cap = CapsSyncManager.lookup(message.capId);
 				CapsSyncManager.sync(tile, cap, message.compound);
 			}

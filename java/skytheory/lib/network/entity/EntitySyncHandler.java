@@ -1,6 +1,5 @@
 package skytheory.lib.network.entity;
 
-import java.util.Objects;
 import java.util.Set;
 
 import net.minecraft.client.Minecraft;
@@ -29,12 +28,13 @@ public class EntitySyncHandler {
 			Entity entity = ctx.getServerHandler().player.world.getEntityByID(message.entityId);
 			Capability<?> cap = CapsSyncManager.lookup(message.capId);
 			Set<EnumFacing> facings = FacingUtils.fromBitFlags(message.bitflag);
-			if (Objects.isNull(entity)) {
+			if (entity != null && entity.isAddedToWorld()) {
+				// Server側のEntityのデータを送信する
+				return new EntitySyncRespond(queueId, entity, cap, facings);
+			} else {
 				// EntityがDespawnしていた場合などはこちら
 				return new EntitySyncMissing(queueId);
 			}
-			// Server側のEntityのデータを送信する
-			return new EntitySyncRespond(queueId, entity, cap, facings);
 		}
 	}
 
@@ -44,7 +44,7 @@ public class EntitySyncHandler {
 			// クライアント側でデータを受け取り、IDからEntityの実体を取得する
 			// 文字に起こすと下手な洒落みたいな状況
 			Entity entity = Minecraft.getMinecraft().player.world.getEntityByID(message.entityId);
-			if (entity != null) {
+			if (entity != null && entity.isAddedToWorld()) {
 				Capability<?> cap = CapsSyncManager.lookup(message.capId);
 				EntitySyncManager.process(message.queueId, entity, cap, message.compound);
 			} else {
@@ -68,7 +68,7 @@ public class EntitySyncHandler {
 		@Override
 		public IMessage onMessage(EntitySyncMessage message, MessageContext ctx) {
 			Entity entity = Minecraft.getMinecraft().player.world.getEntityByID(message.entityId);
-			if (entity != null) {
+			if (entity != null && entity.isAddedToWorld()) {
 				Capability<?> cap = CapsSyncManager.lookup(message.capId);
 				CapsSyncManager.sync(entity, cap, message.compound);
 			}
@@ -80,7 +80,7 @@ public class EntitySyncHandler {
 		@Override
 		public IMessage onMessage(EntitySyncMessage message, MessageContext ctx) {
 			Entity entity = ctx.getServerHandler().player.world.getEntityByID(message.entityId);
-			if (entity != null) {
+			if (entity != null && entity.isAddedToWorld()) {
 				Capability<?> cap = CapsSyncManager.lookup(message.capId);
 				CapsSyncManager.sync(entity, cap, message.compound);
 			}
