@@ -30,6 +30,10 @@ public class TileSyncManager {
 	 * 覚書：クライアント側で呼ぶこと
 	 */
 	public static void enqueue(TileEntity tile, Capability<?> cap, Set<EnumFacing> facings) {
+		if (SYNC_QUEUE.values().stream()
+				.anyMatch(queue -> queue.tile == tile && queue.cap == cap && queue.facings.equals(facings))) {
+			return;
+		}
 		SkyTheoryLib.LOGGER.trace("Enqueue sync: " + QUEUE_NUMBER);
 		SYNC_QUEUE.put(Integer.valueOf(QUEUE_NUMBER++), new TileSyncEntry(tile, cap, new HashSet<EnumFacing>(facings)));
 	}

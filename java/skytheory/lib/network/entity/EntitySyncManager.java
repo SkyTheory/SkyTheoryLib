@@ -33,6 +33,10 @@ public class EntitySyncManager {
 	 * 覚書：クライアント側で呼ぶこと
 	 */
 	public static void enqueue(Entity entity, Capability<?> cap, Set<EnumFacing> facings) {
+		if (SYNC_QUEUE.values().stream()
+				.anyMatch(queue -> queue.entity == entity && queue.cap == cap && queue.facings.equals(facings))) {
+			return;
+		}
 		SkyTheoryLib.LOGGER.trace("Enqueue sync: " + QUEUE_NUMBER);
 		SYNC_QUEUE.put(Integer.valueOf(QUEUE_NUMBER++), new EntitySyncEntry(entity, cap, new HashSet<EnumFacing>(facings)));
 	}
