@@ -17,15 +17,13 @@ import skytheory.lib.util.FacingUtils;
 
 public class EntitySyncRespond implements IMessage {
 
-	public int queueId;
 	public int entityId;
 	public int capId;
 	public NBTTagCompound compound;
 
 	public EntitySyncRespond() {}
 
-	public EntitySyncRespond(int queueID, Entity entity, Capability<?> cap, Set<EnumFacing> facings) {
-		this.queueId = queueID;
+	public EntitySyncRespond(Entity entity, Capability<?> cap, Set<EnumFacing> facings) {
 		this.entityId = entity.getEntityId();
 		this.capId = CapsSyncManager.lookup(cap);
 		this.compound = writeNBT(entity, cap, facings);
@@ -33,7 +31,6 @@ public class EntitySyncRespond implements IMessage {
 
 	@Override
 	public void fromBytes(ByteBuf buf) {
-		this.queueId = buf.readInt();
 		this.entityId = buf.readInt();
 		this.capId = buf.readInt();
 		this.compound = ByteBufUtils.readTag(buf);
@@ -41,7 +38,6 @@ public class EntitySyncRespond implements IMessage {
 
 	@Override
 	public void toBytes(ByteBuf buf) {
-		buf.writeInt(queueId);
 		buf.writeInt(entityId);
 		buf.writeInt(capId);
 		ByteBufUtils.writeTag(buf, compound);

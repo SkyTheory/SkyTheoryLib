@@ -9,8 +9,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
-import skytheory.lib.network.entity.EntitySyncManager;
-import skytheory.lib.network.tile.TileSyncManager;
 import skytheory.lib.util.TickHolder;
 
 public class TickTimeEvent {
@@ -27,8 +25,6 @@ public class TickTimeEvent {
 	public static void clientTick(ClientTickEvent event) {
 		if (event.phase == TickEvent.Phase.START) {
 			TickHolder.clientTicks++;
-			EntitySyncManager.processQueue();
-			TileSyncManager.processQueue();
 			GuiScreen gui = Minecraft.getMinecraft().currentScreen;
 			if (Objects.isNull(gui) || !gui.doesGuiPauseGame()) {
 				TickHolder.inGameClientTicks++;

@@ -12,15 +12,13 @@ import skytheory.lib.util.FacingUtils;
 
 public class EntitySyncRequest implements IMessage {
 
-	public int queueId;
 	public int entityId;
 	public int capId;
 	public int bitflag;
 
 	public EntitySyncRequest() {}
 
-	public EntitySyncRequest(int id, Entity entity, Capability<?> cap, Set<EnumFacing> facings) {
-		this.queueId =id;
+	public EntitySyncRequest(Entity entity, Capability<?> cap, Set<EnumFacing> facings) {
 		this.entityId = entity.getEntityId();
 		this.capId = CapsSyncManager.lookup(cap);
 		this.bitflag = FacingUtils.toBitFlags(facings);
@@ -28,7 +26,6 @@ public class EntitySyncRequest implements IMessage {
 
 	@Override
 	public void fromBytes(ByteBuf buf) {
-		queueId = buf.readInt();
 		entityId = buf.readInt();
 		capId = buf.readInt();
 		bitflag = buf.readInt();
@@ -36,7 +33,6 @@ public class EntitySyncRequest implements IMessage {
 
 	@Override
 	public void toBytes(ByteBuf buf) {
-		buf.writeInt(queueId);
 		buf.writeInt(entityId);
 		buf.writeInt(capId);
 		buf.writeInt(bitflag);

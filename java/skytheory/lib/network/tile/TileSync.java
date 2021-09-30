@@ -30,7 +30,7 @@ public class TileSync {
 	 */
 	public static void request(TileEntity tile, Capability<?> cap, Set<EnumFacing> facings) {
 		NetworkUtils.requireClient(tile);
-		TileSyncManager.enqueue(tile, cap, facings);
+		TileSyncManager.request(tile, cap, facings);
 	}
 
 

@@ -18,7 +18,6 @@ import skytheory.lib.util.FacingUtils;
 
 public class TileSyncRespond implements IMessage {
 
-	public int queueId;
 	public int x;
 	public int y;
 	public int z;
@@ -27,8 +26,7 @@ public class TileSyncRespond implements IMessage {
 
 	public TileSyncRespond() {}
 
-	public TileSyncRespond(int queueID, TileEntity tile, Capability<?> cap, Set<EnumFacing> facings) {
-		this.queueId = queueID;
+	public TileSyncRespond(TileEntity tile, Capability<?> cap, Set<EnumFacing> facings) {
 		BlockPos pos = tile.getPos();
 		this.x = pos.getX();
 		this.y = pos.getY();
@@ -39,7 +37,6 @@ public class TileSyncRespond implements IMessage {
 
 	@Override
 	public void fromBytes(ByteBuf buf) {
-		this.queueId = buf.readInt();
 		this.x = buf.readInt();
 		this.y = buf.readInt();
 		this.z = buf.readInt();
@@ -49,7 +46,6 @@ public class TileSyncRespond implements IMessage {
 
 	@Override
 	public void toBytes(ByteBuf buf) {
-		buf.writeInt(queueId);
 		buf.writeInt(x);
 		buf.writeInt(y);
 		buf.writeInt(z);

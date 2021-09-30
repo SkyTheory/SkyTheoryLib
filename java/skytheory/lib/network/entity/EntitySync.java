@@ -30,7 +30,16 @@ public class EntitySync {
 	 */
 	public static void request(Entity entity, Capability<?> cap, Set<EnumFacing> facings) {
 		NetworkUtils.requireClient(entity);
-		EntitySyncManager.enqueue(entity, cap, facings);
+		EntitySyncManager.request(entity, cap, facings);
+	}
+
+	/**
+	 * Entityを追跡中のクライアントに対してメッセージを送信する
+	 * @param entity
+	 * @param cap
+	 */
+	public static void sendToClientTracking(Entity entity, Capability<?> cap) {
+		sendToClientTracking(entity, cap, FacingUtils.SET_SINGLE_NULL);
 	}
 
 	/**
@@ -41,6 +50,7 @@ public class EntitySync {
 	 */
 	public static void sendToClientTracking(Entity entity, Capability<?> cap, Set<EnumFacing> facings) {
 		NetworkUtils.requireServer(entity);
+		Validate.notNull(facings);
 		PacketHandler.CHANNEL.sendToAllTracking(new EntitySyncMessage(entity, cap, facings), entity);
 	}
 

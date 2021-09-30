@@ -17,12 +17,10 @@ import skytheory.lib.network.CapsSyncManager;
 import skytheory.lib.network.PacketHandler;
 import skytheory.lib.network.entity.EntitySyncHandler;
 import skytheory.lib.network.entity.EntitySyncMessage;
-import skytheory.lib.network.entity.EntitySyncMissing;
 import skytheory.lib.network.entity.EntitySyncRequest;
 import skytheory.lib.network.entity.EntitySyncRespond;
 import skytheory.lib.network.tile.TileSyncHandler;
 import skytheory.lib.network.tile.TileSyncMessage;
-import skytheory.lib.network.tile.TileSyncMissing;
 import skytheory.lib.network.tile.TileSyncRequest;
 import skytheory.lib.network.tile.TileSyncRespond;
 import skytheory.lib.util.WrenchRegistry;
@@ -47,12 +45,10 @@ public class CommonProxy {
 		PacketHandler.createChannel(EntitySyncHandler.TOSERVER, EntitySyncMessage.class, Side.SERVER);
 		PacketHandler.createChannel(EntitySyncHandler.REQUEST, EntitySyncRequest.class, Side.SERVER);
 		PacketHandler.createChannel(EntitySyncHandler.RESPOND, EntitySyncRespond.class, Side.CLIENT);
-		PacketHandler.createChannel(EntitySyncHandler.MISSING, EntitySyncMissing.class, Side.CLIENT);
 		PacketHandler.createChannel(TileSyncHandler.TOCLIENT, TileSyncMessage.class, Side.CLIENT);
 		PacketHandler.createChannel(TileSyncHandler.TOSERVER, TileSyncMessage.class, Side.SERVER);
 		PacketHandler.createChannel(TileSyncHandler.REQUEST, TileSyncRequest.class, Side.SERVER);
 		PacketHandler.createChannel(TileSyncHandler.RESPOND, TileSyncRespond.class, Side.CLIENT);
-		PacketHandler.createChannel(TileSyncHandler.MISSING, TileSyncMissing.class, Side.CLIENT);
 		WrenchRegistry.init();
 	}
 

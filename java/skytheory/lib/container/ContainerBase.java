@@ -238,7 +238,9 @@ public abstract class ContainerBase extends Container {
 				return stack.copy();
 			}
 		}
-		return super.slotClick(slotId, dragType, clickTypeIn, player);
+		ItemStack stack = super.slotClick(slotId, dragType, clickTypeIn, player);
+		this.detectAndSendChanges();
+		return stack;
 	}
 
 	@Override
