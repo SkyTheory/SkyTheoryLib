@@ -30,7 +30,7 @@ public class SkyTheoryLib {
 	public static final String MOD_ID = "stlib";
 	public static final String MOD_NAME = "SkyTheoryLib";
 	public static final String MC_VERSION = "1.12.2";
-	public static final String MOD_VERSION = "1.3.0";
+	public static final String MOD_VERSION = "1.3.1";
 	public static final String VERSION = MC_VERSION + "-" + MOD_VERSION;
 	public static final SkyTheoryLibLogger LOGGER = SkyTheoryLibLogger.getLogger();
 

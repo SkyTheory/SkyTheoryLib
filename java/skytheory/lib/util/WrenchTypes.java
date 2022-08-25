@@ -5,6 +5,8 @@ import net.minecraft.block.BlockBanner;
 import net.minecraft.block.BlockSlab;
 import net.minecraft.block.BlockStairs;
 import net.minecraft.block.BlockTrapDoor;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -190,7 +192,19 @@ public class WrenchTypes {
 	public static final WrenchType SLAB = new WrenchType("Slab") {
 		@Override
 		public void interact(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing) {
-			WrenchHelper.cycleProperty(world, pos, BlockSlab.HALF);
+			IBlockState state = world.getBlockState(pos);
+			Block block = state.getBlock();
+			if (block instanceof BlockSlab) {
+				BlockSlab slab = (BlockSlab) block;
+				if (slab.isDouble()) {
+					IProperty<Boolean> prop = WrenchHelper.getStateContainer("seamless", state.getPropertyKeys(), Boolean.class);
+					if (prop != null) {
+						WrenchHelper.cycleProperty(world, pos, prop);
+					}
+				} else {
+					WrenchHelper.cycleProperty(world, pos, BlockSlab.HALF);
+				}
+			}
 		}
 	};
 

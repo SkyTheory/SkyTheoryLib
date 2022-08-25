@@ -82,6 +82,7 @@ public class WrenchHelper {
 		IBlockState state = world.getBlockState(pos);
 		if (world.isRemote) return;
 		if (Objects.isNull(property)) return;
+		if (!state.getPropertyKeys().contains(property)) return;
 		world.setBlockState(pos, state.cycleProperty(property));
 	}
 
