@@ -37,6 +37,9 @@ public interface ModelSelector {
 		return new ModelLayerLocation(getTextureLocation(), "main");
 	}
 	
+	/**
+	 * 利用するレンダラークラスを指定する
+	 */
 	default void registerRenderProvider(EntityRenderersEvent.RegisterRenderers event, BlockEntityType<?> type) {
 		event.registerBlockEntityRenderer(type, SimpleBlockEntityRenderer::new);
 	}
