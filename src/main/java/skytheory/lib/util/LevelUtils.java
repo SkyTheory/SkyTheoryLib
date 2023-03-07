@@ -12,22 +12,25 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.ticks.LevelChunkTicks;
 import skytheory.lib.network.BreakEffectMessage;
 import skytheory.lib.network.SkyTheoryLibNetwork;
 
 public class LevelUtils {
 
-	public static Set<BlockPos> getAdjacentPosIncludeDiagonal(BlockPos pos) {
+	public static Set<BlockPos> collectTangentPos(BlockPos pos) {
 		Set<BlockPos> result = new HashSet<>();
 		for (int x = -1; x <= 1; x++) {
 			for (int y = -1; y <= 1; y++) {
 				for (int z = -1; z <= 1; z++) {
 					BlockPos target = pos.offset(x, y, z);
-					if (!target.equals(pos) && target.distManhattan(pos) < 3) {
+					if (!target.equals(pos)) {
 						result.add(target);
 					}
 				}
@@ -91,6 +94,16 @@ public class LevelUtils {
 			}
 		}
 		removeBlock(level, pos, state);
+	}
+
+	public static void removeTick(Level level, BlockPos pos) {
+		BlockState state = level.getBlockState(pos);
+		ChunkAccess chunk = level.getChunk(pos);
+		if (chunk.getBlockTicks() instanceof LevelChunkTicks<Block> chunkTicks) {
+			if (chunkTicks.hasScheduledTick(pos, state.getBlock())) {
+				chunkTicks.removeIf(schedule -> schedule.pos().equals(pos));
+			}
+		}
 	}
 
 }
