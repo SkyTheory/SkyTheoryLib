@@ -13,11 +13,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
-public class ItemHandler extends ItemStackHandler {
+public class InventoryHandler extends ItemStackHandler {
 
 	private final List<ItemHandlerListener> listeners = new ArrayList<>();
 
-	public ItemHandler(int size) {
+	public InventoryHandler(int size) {
 		super(size);
 	}
 

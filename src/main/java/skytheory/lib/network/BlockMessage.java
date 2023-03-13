@@ -20,7 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
 import skytheory.lib.block.DataSync;
 
 public class BlockMessage {
@@ -93,7 +92,7 @@ public class BlockMessage {
 		Level level = player.server.getLevel(key);
 		if (level != null && level.isLoaded(pos) && level.getBlockEntity(pos) instanceof DataSync sync) {
 			CompoundTag replyTag = sync.writeSyncTag();
-			SkyTheoryLibNetwork.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new BlockMessage(message.dimension, message.pos, replyTag));
+			SkyTheoryLibNetwork.sendToClient(player, new BlockMessage(message.dimension, message.pos, replyTag));
 		} else {
 			LOGGER.error("Sync failed: Missing packet object.");
 		}

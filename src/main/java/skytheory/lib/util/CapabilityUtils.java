@@ -66,7 +66,7 @@ public class CapabilityUtils {
 				Tag data = nbt.get("data");
 				try {
 					serializer.deserializeNBT(data);
-				} catch (Exception e) {
+				} catch (ClassCastException e) {
 					LogUtils.getLogger().error("Deserialization failed: " + data.getAsString(), e);
 				}
 			}

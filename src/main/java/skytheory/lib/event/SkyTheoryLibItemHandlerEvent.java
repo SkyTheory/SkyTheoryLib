@@ -21,7 +21,7 @@ import net.minecraftforge.items.IItemHandler;
 import skytheory.lib.SkyTheoryLib;
 import skytheory.lib.capability.DataProvider;
 import skytheory.lib.capability.MultiDataSerializer;
-import skytheory.lib.capability.itemhandler.ItemHandler;
+import skytheory.lib.capability.itemhandler.InventoryHandler;
 import skytheory.lib.capability.itemhandler.ItemHandlerEntity;
 import skytheory.lib.capability.itemhandler.ItemHandlerItem;
 import skytheory.lib.capability.itemhandler.ItemHandlerListener;
@@ -77,8 +77,8 @@ public class SkyTheoryLibItemHandlerEvent {
 	private static void registerItemHandlerListener(List<IItemHandler> handlers, Object obj) {
 		if (obj instanceof ItemHandlerListener listener) {
 			handlers.stream()
-			.filter(ItemHandler.class::isInstance)
-			.map(ItemHandler.class::cast)
+			.filter(InventoryHandler.class::isInstance)
+			.map(InventoryHandler.class::cast)
 			.forEach(handler -> handler.addListener(listener));
 		}
 	}
@@ -86,8 +86,8 @@ public class SkyTheoryLibItemHandlerEvent {
 	private static void registerItemHandlerListenerItem(List<IItemHandler> handlers, ItemStack stack) {
 		if (stack.getItem() instanceof ItemHandlerListenerItem listener) {
 			handlers.stream()
-			.filter(ItemHandler.class::isInstance)
-			.map(ItemHandler.class::cast)
+			.filter(InventoryHandler.class::isInstance)
+			.map(InventoryHandler.class::cast)
 			.forEach(handler -> handler.addListener((h, s) -> listener.onItemHandlerChanged(stack, h, s)));
 		}
 	}

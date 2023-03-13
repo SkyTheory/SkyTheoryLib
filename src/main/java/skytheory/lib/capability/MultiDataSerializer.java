@@ -36,13 +36,13 @@ public class MultiDataSerializer implements INBTSerializable<ListTag> {
 	@Override
 	public void deserializeNBT(ListTag nbt) {
 		if (nbt.getElementType() == Tag.TAG_COMPOUND) {
-			if (nbt.size() == seriarizers.size()) {
-				Iterator<INBTSerializable<CompoundTag>> it = this.seriarizers.iterator();
-				nbt.stream()
-				.map(CompoundTag.class::cast)
-				.forEach(it.next()::deserializeNBT);
-			} else {
-				LogUtils.getLogger().error("Deserialization skipped; Tags and handlers count are different.");
+			Iterator<INBTSerializable<CompoundTag>> it = this.seriarizers.iterator();
+			nbt.stream()
+			.limit(Math.min(nbt.size(), seriarizers.size()))
+			.map(CompoundTag.class::cast)
+			.forEach(it.next()::deserializeNBT);
+			if (nbt.size() != seriarizers.size()) {
+				LogUtils.getLogger().error("Deserialization maybe failed; Tags and handlers count are different.");
 			}
 		} else if (nbt.getElementType() != 0) {
 			LogUtils.getLogger().error("Deserialization skipped; NBT type is invalid.");
