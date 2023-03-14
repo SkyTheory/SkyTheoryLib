@@ -24,6 +24,11 @@ public class RunOneForEach<T extends LivingEntity> extends BehaviorSelector<T> {
 		this.history = new LinkedList<>();
 		this.runningBehavior = Collections.emptySet();
 	}
+	
+	public RunOneForEach(Collection<BehaviorControl<? super T>> behaviors) {
+		this();
+		behaviors.forEach(this::addBehavior);
+	}
 
 	public RunOneForEach<T> addBehavior(BehaviorControl<? super T> pBehaviorControl) {
 		this.allBehaviors.add(pBehaviorControl);

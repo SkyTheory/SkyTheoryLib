@@ -13,13 +13,18 @@ public class RunOneRandomized<T extends LivingEntity> extends BehaviorSelector<T
 	protected final ShufflingList<BehaviorControl<? super T>> allBehaviors;
 	
 	protected Collection<BehaviorControl<? super T>> runningBehavior;
-	
+
 	public RunOneRandomized() {
 		this.allBehaviors = new ShufflingList<>();
 		this.runningBehavior = Collections.emptySet();
 	}
+
+	public RunOneRandomized(Collection<BehaviorControl<? super T>> behaviors) {
+		this();
+		behaviors.forEach(behavior -> this.addBehavior(behavior, 1));
+	}
 	
-	public RunOneRandomized<T> addBehavior(BehaviorSelector<? super T> pBehavior, int pWeight) {
+	public RunOneRandomized<T> addBehavior(BehaviorControl<? super T> pBehavior, int pWeight) {
 		this.allBehaviors.add(pBehavior, pWeight);
 		return this;
 	}
