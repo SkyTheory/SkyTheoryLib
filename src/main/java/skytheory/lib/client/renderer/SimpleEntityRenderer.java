@@ -4,8 +4,8 @@ import java.util.function.Function;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -18,8 +18,11 @@ import net.minecraft.world.entity.Entity;
 
 public abstract class SimpleEntityRenderer<T extends Entity> extends EntityRenderer<T> {
 
+	protected final EntityModelSet entityModelSet;
+	
 	protected SimpleEntityRenderer(EntityRendererProvider.Context pContext) {
 		super(pContext);
+		this.entityModelSet = pContext.getModelSet();
 	}
 
 	public void render(T pEntity, float pEntityYaw, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
@@ -38,11 +41,10 @@ public abstract class SimpleEntityRenderer<T extends Entity> extends EntityRende
 		return new ModelLayerLocation(getTextureLocation(entity), "main");
 	}
 	
-	// TODO createBodyLayerの登録
 	public static <T extends Entity> EntityRendererProvider<T> create(ModelLayerLocation location, Function<ModelPart, EntityModel<T>> modelProvider, ResourceLocation texture) {
 		return (ctx) -> new SimpleEntityRenderer<T>(ctx) {
 
-			ModelPart part = Minecraft.getInstance().getEntityModels().bakeLayer(location);
+			ModelPart part = ctx.bakeLayer(location);
 			EntityModel<T> model = modelProvider.apply(part);
 			
 			@Override
