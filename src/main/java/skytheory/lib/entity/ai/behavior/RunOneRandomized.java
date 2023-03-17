@@ -1,7 +1,6 @@
 package skytheory.lib.entity.ai.behavior;
 
 import java.util.Collection;
-import java.util.Optional;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -9,14 +8,12 @@ import net.minecraft.world.entity.ai.behavior.Behavior.Status;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.behavior.ShufflingList;
 
-public class RunOneRandomized<T extends LivingEntity> extends BehaviorSelector<T> {
+public class RunOneRandomized<T extends LivingEntity> extends AbstractRunOneBehavior<T> {
 
 	protected final ShufflingList<BehaviorControl<? super T>> allBehaviors;
-	protected Optional<BehaviorControl<? super T>> currentBehavior;
 
 	public RunOneRandomized() {
 		this.allBehaviors = new ShufflingList<>();
-		this.currentBehavior = Optional.empty();
 	}
 
 	public RunOneRandomized(Collection<BehaviorControl<? super T>> behaviors) {
@@ -35,19 +32,15 @@ public class RunOneRandomized<T extends LivingEntity> extends BehaviorSelector<T
 	}
 
 	@Override
-	public boolean tryStart(ServerLevel pLevel, T pEntity, long pGameTime) {
-		if (this.isRunning()) return true;
+	public void updateBehaviorStatus(ServerLevel pLevel, T pEntity, long pGameTime) {
+		if (this.isRunning()) return;
 		this.allBehaviors.shuffle();
 		for (var behavior : allBehaviors) {
 			behavior.tryStart(pLevel, pEntity, pGameTime);
 			if (behavior.getStatus() == Status.RUNNING) {
-				this.currentBehavior = Optional.of(behavior);
 				break;
 			}
 		}
-		boolean running = this.isRunning();
-		this.status = running ? Status.RUNNING : Status.STOPPED;
-		return running;
 	}
 
 	@Override
@@ -55,13 +48,4 @@ public class RunOneRandomized<T extends LivingEntity> extends BehaviorSelector<T
 		return this.allBehaviors.stream().toList();
 	}
 
-	@Override
-	protected void onBehaviorStopped(BehaviorControl<? super T> behavior) {
-		this.currentBehavior = Optional.empty();
-	}
-	
-	protected boolean isRunning() {
-		return this.currentBehavior.map(behavior -> behavior.getStatus() == Status.RUNNING).orElse(false);
-	}
-	
 }
