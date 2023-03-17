@@ -54,11 +54,8 @@ public class RunOneForEach<T extends LivingEntity> extends AbstractRunOneBehavio
 
 	protected void setRunningBehavior(BehaviorControl<? super T> pBehavior, ServerLevel pLevel, T pEntity, long pGameTime) {
 		int index = allBehaviors.indexOf(pBehavior);
-		if (history.contains(index)) {
-			this.history.remove(index);
-		}
+		this.history.removeIf(value -> value == index);
 		this.history.add(index);
-		stopOther(pBehavior, pLevel, pEntity, pGameTime);
 	}
 	
 }
