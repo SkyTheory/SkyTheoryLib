@@ -2,7 +2,6 @@ package skytheory.lib.entity.ai.behavior;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,8 +14,8 @@ public class RunOnePrioritized<T extends LivingEntity> extends BehaviorSelector<
 
 	protected final List<BehaviorControl<? super T>> allBehaviors;
 	protected final boolean continuity;
-	
-	protected Collection<BehaviorControl<? super T>> runningBehavior;
+
+	protected Optional<BehaviorControl<? super T>> currentBehavior;
 
 	public RunOnePrioritized() {
 		this(false);
@@ -24,7 +23,7 @@ public class RunOnePrioritized<T extends LivingEntity> extends BehaviorSelector<
 	
 	public RunOnePrioritized(boolean continuity) {
 		this.allBehaviors = new ArrayList<>();
-		this.runningBehavior = Collections.emptySet();
+		this.currentBehavior = Optional.empty();
 		this.continuity = continuity;
 	}
 
@@ -43,22 +42,19 @@ public class RunOnePrioritized<T extends LivingEntity> extends BehaviorSelector<
 	}
 
 	@Override
-	protected Collection<BehaviorControl<? super T>> getRunningBehaviors() {
-		return runningBehavior;
-	}
-
-	@Override
-	protected void checkRunningBehaviors(ServerLevel pLevel, T pEntity, long pGameTime) {
-		Optional<BehaviorControl<? super T>> currentBehavior = this.runningBehavior.stream().findFirst();
-		boolean isRunning = currentBehavior.map(behavior -> behavior.getStatus() == Status.RUNNING).orElse(false);
-		if (isRunning && this.continuity) return;
+	public boolean tryStart(ServerLevel pLevel, T pEntity, long pGameTime) {
+		if (this.isRunning() && this.continuity) return true;
 		for (var behavior : allBehaviors) {
-			if (isRunning && behavior == currentBehavior.orElse(null)) break;
-			if (behavior.tryStart(pLevel, pEntity, pGameTime)) {
-				setRunningBehavior(behavior);
-				return;
+			if (this.isRunning() && behavior == this.currentBehavior.get()) break;
+			behavior.tryStart(pLevel, pEntity, pGameTime);
+			if (behavior.getStatus() == Status.RUNNING) {
+				this.currentBehavior = Optional.of(behavior);
+				break;
 			}
 		}
+		boolean running = this.isRunning();
+		this.status = running ? Status.RUNNING : Status.STOPPED;
+		return running;
 	}
 
 	@Override
@@ -66,15 +62,13 @@ public class RunOnePrioritized<T extends LivingEntity> extends BehaviorSelector<
 		return allBehaviors;
 	}
 
-	protected void setRunningBehavior(BehaviorControl<? super T> behavior) {
-		this.runningBehavior = Collections.singleton(behavior);
-	}
-
 	@Override
-	protected void removeRunningBehavior(BehaviorControl<? super T> behavior) {
-		if (this.runningBehavior.contains(behavior)) {
-			this.runningBehavior = Collections.emptySet();
-		}
+	protected void onBehaviorStopped(BehaviorControl<? super T> behavior) {
+		this.currentBehavior = Optional.empty();
 	}
-
+	
+	protected boolean isRunning() {
+		return this.currentBehavior.map(behavior -> behavior.getStatus() == Status.RUNNING).orElse(false);
+	}
+	
 }

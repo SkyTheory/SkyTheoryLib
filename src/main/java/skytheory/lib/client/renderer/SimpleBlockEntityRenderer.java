@@ -6,8 +6,8 @@ import java.util.Map;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.Model;
+import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
@@ -20,10 +20,12 @@ import skytheory.lib.client.model.ModelSetup;
 public class SimpleBlockEntityRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
 	
 	protected final BlockEntityRenderDispatcher renderer;
+	protected final EntityModelSet entityModelSet;
 	private static Map<ModelLayerLocation, Model> MODEL_CACHE = new HashMap<>();
 	
 	public SimpleBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {
 		this.renderer = ctx.getBlockEntityRenderDispatcher();
+		this.entityModelSet = ctx.getModelSet();
 	}
 
 	@Override
@@ -46,7 +48,7 @@ public class SimpleBlockEntityRenderer<T extends BlockEntity> implements BlockEn
 	protected Model getModel(ModelSelector selector) {
 		ModelLayerLocation location = selector.getModelLayerLocation();
 		return MODEL_CACHE.computeIfAbsent(location,
-				(loc) -> selector.getModelProvider().apply(Minecraft.getInstance().getEntityModels().bakeLayer(loc)));
+				(loc) -> selector.getModelProvider().apply(entityModelSet.bakeLayer(loc)));
 	}
 	
 }

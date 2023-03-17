@@ -22,7 +22,6 @@ public class SimpleEntityRenderer<T extends Entity & EntityModelSelector<T>> ext
 	}
 
 	public void render(T pEntity, float pEntityYaw, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
-		if (pEntity == null || pEntity.isInvisible()) return;
 		super.render(pEntity, pEntityYaw, pPartialTick, pPoseStack, pBuffer, pPackedLight);
 		pPoseStack.pushPose();
 		pPoseStack.scale(-1.0f, -1.0f, 1.0f);
