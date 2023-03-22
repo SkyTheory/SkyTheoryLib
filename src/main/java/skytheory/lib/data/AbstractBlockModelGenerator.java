@@ -26,9 +26,18 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 	}
 
 	/**
-	 * 手動でassets/modid/models/blockに配置したモデルから、それを継承したモデルを作成する
+	 * 指定されたモデルを用いて単一BlockStateのブロックを登録する
 	 */
-	public BlockModelBuilder createChildModel(Block block, ResourceLocation location) {
+	public void registerBlockModel(Block block) {
+		ResourceLocation location = ForgeRegistries.BLOCKS.getKey(block);
+		ConfiguredModel configured = new ConfiguredModel(new UncheckedModelFile(location));
+		this.getVariantBuilder(block).partialState().setModels(configured);
+	}
+	
+	/**
+	 * 指定されたモデルを継承し、テクスチャの指定などを行うためのBlockModelBuilderを返す
+	 */
+	public BlockModelBuilder extendBlockModel(Block block, ResourceLocation location) {
 		ModelFile parent = new UncheckedModelFile(location);
 		BlockModelBuilder model = this.models().getBuilder(this.getRegistryKey(block).getPath()).parent(parent);
 		return model;
@@ -39,7 +48,7 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 	}
 	
 	public void layeredOre(Block block, ResourceLocation baseLocation, ResourceLocation blockLocation) {
-		BlockModelBuilder model = this.createChildModel(block, new ResourceLocation("stlib", "block/layered_block"))
+		BlockModelBuilder model = this.extendBlockModel(block, new ResourceLocation("stlib", "block/layered_block"))
 		.texture("base", baseLocation)
 		.texture("mineral", blockLocation)
 		.renderType(new ResourceLocation("translucent"));
@@ -121,7 +130,7 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 		registerModels();
 		List<Block> entries = this.getAllEntries();
 		registeredBlocks.keySet().forEach(entries::remove);
-		entries.forEach(this::cubeAll);
+		entries.forEach(this::simpleBlock);
 	}
 	
 	protected List<Block> getAllEntries() {

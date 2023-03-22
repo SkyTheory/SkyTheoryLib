@@ -1,6 +1,7 @@
 package skytheory.lib.capability;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,39 +14,37 @@ import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
 import skytheory.lib.util.CapabilityUtils;
 
-public class DataProvider<T extends Tag> implements ICapabilitySerializable<T> {
+public class DataProvider<T, U extends Tag> implements ICapabilitySerializable<U> {
 
-	private final Capability<?> cap;
-	private final Function<Direction, ?> function;
-	private final INBTSerializable<T> serializer;
+	private final Capability<T> cap;
+	private final Function<Direction, T> dataGetter;
+	private final Supplier<INBTSerializable<U>> serializerGetter;
 
-	public static <T extends Tag, R> DataProvider<T> createSingle(Capability<R> cap, R contents, INBTSerializable<T> serializer) {
-		return new DataProvider<T>(cap, (side -> contents), serializer);
-	}
-
-	public static <T extends Tag, R> DataProvider<T> createSided(Capability<R> cap, Function<Direction, R> func, INBTSerializable<T> serializer) {
-		return new DataProvider<T>(cap, func, serializer);
-	}
-
-	protected <R> DataProvider(Capability<R> cap, Function<Direction, R> function, INBTSerializable<T> serializer) {
+	public DataProvider(Capability<T> cap, Supplier<T> dataGetter, Supplier<INBTSerializable<U>> serializerGetter) {
 		this.cap = cap;
-		this.function = function;
-		this.serializer = serializer;
+		this.dataGetter = (side) -> dataGetter.get();
+		this.serializerGetter = serializerGetter;
+	}
+
+	public DataProvider(Capability<T> cap, Function<Direction, T> dataGetter, Supplier<INBTSerializable<U>> serializerGetter) {
+		this.cap = cap;
+		this.dataGetter = dataGetter;
+		this.serializerGetter = serializerGetter;
 	}
 
 	@Override
 	public <R> @NotNull LazyOptional<R> getCapability(@NotNull Capability<R> cap, @Nullable Direction side) {
-		return this.cap.orEmpty(cap, CapabilityUtils.fromNullable(function.apply(side)));
+		return this.cap.orEmpty(cap, CapabilityUtils.fromNullable(dataGetter.apply(side)));
 	}
 
 	@Override
-	public T serializeNBT() {
-		return serializer.serializeNBT();
+	public U serializeNBT() {
+		return serializerGetter.get().serializeNBT();
 	}
 
 	@Override
-	public void deserializeNBT(T nbt) {
-		serializer.deserializeNBT(nbt);
+	public void deserializeNBT(U nbt) {
+		serializerGetter.get().deserializeNBT(nbt);
 	}
-
+	
 }

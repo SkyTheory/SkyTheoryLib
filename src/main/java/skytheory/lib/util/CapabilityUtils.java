@@ -39,9 +39,9 @@ public class CapabilityUtils {
 	 * @param object
 	 * @return
 	 */
-	public static <T> LazyOptional<T> fromNullable(Object object) {
-		if (object == null) return LazyOptional.empty();
-		return LazyOptional.of(() -> object).cast();
+	public static <T> LazyOptional<T> fromNullable(Object value) {
+		if (value == null) return LazyOptional.empty();
+		return LazyOptional.of(() -> value).cast();
 	}
 
 	/**
@@ -50,24 +50,24 @@ public class CapabilityUtils {
 	 * @return
 	 */
 	@SuppressWarnings("rawtypes")
-	public static INBTSerializable<CompoundTag> adjustSerilizer(INBTSerializable serializer) {
+	public static INBTSerializable<CompoundTag> adjustSerializer(INBTSerializable serealizer) {
 		return new INBTSerializable<CompoundTag>() {
 
 			@Override
 			public CompoundTag serializeNBT() {
 				CompoundTag nbt = new CompoundTag();
-				nbt.put("data", serializer.serializeNBT());
+					nbt.put("data", serealizer.serializeNBT());
 				return nbt;
 			}
 
 			@SuppressWarnings("unchecked")
 			@Override
 			public void deserializeNBT(CompoundTag nbt) {
-				Tag data = nbt.get("data");
+				Tag tag = nbt.get("data");
 				try {
-					serializer.deserializeNBT(data);
+					serealizer.deserializeNBT(tag);
 				} catch (ClassCastException e) {
-					LogUtils.getLogger().error("Deserialization failed: " + data.getAsString(), e);
+					LogUtils.getLogger().error("Deserialization failed: " + tag.getAsString(), e);
 				}
 			}
 		};
@@ -87,7 +87,7 @@ public class CapabilityUtils {
 	public static <T> T getCapability(Capability<T> cap, @Nullable ICapabilityProvider obj) {
 		return getCapability(cap, obj, null);
 	}
-	
+
 	@Nullable
 	public static <T> T getCapability(Capability<T> cap, @Nullable ICapabilityProvider obj, Direction side) {
 		if (obj == null) return null;
