@@ -1,10 +1,13 @@
 package skytheory.lib.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -13,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -26,7 +30,7 @@ public class ItemHandlerUtils {
 	 * @param handler
 	 */
 	public static void clear(IItemHandlerModifiable handler) {
-		ItemHandlerStream.create(handler).forEach(slot -> slot.clear());
+		ItemHandlerStream.create(handler).forEach(ItemHandlerSlot::clear);
 	}
 
 	/**
@@ -35,7 +39,7 @@ public class ItemHandlerUtils {
 	 * @return
 	 */
 	public static boolean isEmpty(IItemHandler handler) {
-		return ItemHandlerStream.create(handler).allMatch(slot -> slot.isEmpty());
+		return ItemHandlerStream.create(handler).allMatch(ItemHandlerSlot::isEmpty);
 	}
 
 	/**
@@ -60,6 +64,31 @@ public class ItemHandlerUtils {
 		return ItemHandlerHelper.insertItem(handler, stack, mode.actual());
 	}
 
+	
+	/**
+	 * アイテムを搬入する
+	 * @param provider
+	 * @param direction
+	 * @param stack
+	 * @return remainder
+	 */
+	public static ItemStack insertItem(ICapabilityProvider provider, Direction direction, ItemStack stack) {
+		return insertItem(provider, direction, stack, ItemHandlerMode.EXECUTE);
+	}
+	
+	/**
+	 * アイテムを搬入する
+	 * @param provider
+	 * @param direction
+	 * @param stack
+	 * @param mode
+	 * @return remainder
+	 */
+	public static ItemStack insertItem(ICapabilityProvider provider, Direction direction, ItemStack stack, ItemHandlerMode mode) {
+		return provider.getCapability(ForgeCapabilities.ITEM_HANDLER, direction)
+				.map(handler -> insertItem(handler, stack, mode)).orElse(stack);
+	}
+	
 	/**
 	 * 複数のアイテムをまとめて搬入する
 	 * @param dest
@@ -69,23 +98,23 @@ public class ItemHandlerUtils {
 	public static List<ItemStack> insertItems(IItemHandler dest, Collection<ItemStack> collection) {
 		return insertItems(dest, collection, ItemHandlerMode.EXECUTE);
 	}
-
+	
 	/**
 	 * 複数のアイテムをまとめて搬入する
 	 * シミュレーションの際、isItemValidやgetSlotLimitが動的なItemHandlerには実際と異なる値を返す場合がある
 	 * 対象の型が自明の場合にのみの使用にとどめるのが無難 (e.g. 自作加工機械のアウトプットの検証)
 	 * @param dest
-	 * @param itemStacks
+	 * @param items
 	 * @param mode
 	 * @return remainder
 	 * @deprecated Use caution when simulating.
 	 */
 	@Deprecated
-	public static List<ItemStack> insertItems(IItemHandler dest, Collection<ItemStack> itemStacks, ItemHandlerMode mode) {
-		List<ItemStack> result = itemStacks.stream()
+	public static List<ItemStack> insertItems(IItemHandler dest, Collection<ItemStack> items, ItemHandlerMode mode) {
+		List<ItemStack> result = items.stream()
 				.filter(stack -> !stack.isEmpty())
 				.map(stack -> stack.copy())
-				.toList();
+				.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 		ItemHandlerStream.create(dest).forEach(slot -> {
 			ItemStack exist = slot.getStackInSlot();
 			int margin = Math.min(slot.getSlotLimit(), exist.getMaxStackSize()) - exist.getCount();
@@ -112,9 +141,37 @@ public class ItemHandlerUtils {
 				}
 			}
 		});
-		return result;
+		return List.copyOf(result);
 	}
 
+	/**
+	 * 複数のアイテムをまとめて搬入する
+	 * @param provider
+	 * @param direction
+	 * @param items
+	 * @return remainder
+	 */
+	public static List<ItemStack> insertItems(ICapabilityProvider provider, Direction direction, Collection<ItemStack> items) {
+		return insertItems(provider, direction, items, ItemHandlerMode.EXECUTE);
+		}
+
+	/**
+	 * 複数のアイテムをまとめて搬入する
+	 * シミュレーションの際、isItemValidやgetSlotLimitが動的なItemHandlerには実際と異なる値を返す場合がある
+	 * 対象の型が自明の場合にのみの使用にとどめるのが無難 (e.g. 自作加工機械のアウトプットの検証)
+	 * @param provider
+	 * @param itemStacks
+	 * @param mode
+	 * @return remainder
+	 * @deprecated Use caution when simulating.
+	 */
+	@Deprecated
+	public static List<ItemStack> insertItems(ICapabilityProvider provider, Direction direction, Collection<ItemStack> items, ItemHandlerMode mode) {
+		return provider.getCapability(ForgeCapabilities.ITEM_HANDLER, direction)
+				.map(handler -> insertItems(handler, items, mode)).orElse(List.of());
+	}
+
+	
 	/**
 	 * 先頭から順にいずれかのアイテムを取り出す
 	 * @param handler
@@ -140,6 +197,30 @@ public class ItemHandlerUtils {
 	}
 
 	/**
+	 * 先頭から順にいずれかのアイテムを取り出す
+	 * @param provider
+	 * @param direction
+	 * @param amount
+	 * @return extracted
+	 */
+	public static ItemStack extractItem(ICapabilityProvider provider, Direction direction, int amount) {
+		return extractItem(provider, direction, amount, ItemHandlerMode.EXECUTE);
+	}
+	
+	/**
+	 * 先頭から順にいずれかのアイテムを取り出す
+	 * @param provider
+	 * @param direction
+	 * @param amount
+	 * @param mode
+	 * @return extracted
+	 */
+	public static ItemStack extractItem(ICapabilityProvider provider, Direction direction, int amount, ItemHandlerMode mode) {
+		return provider.getCapability(ForgeCapabilities.ITEM_HANDLER, direction)
+				.map(handler -> extractItem(handler, amount, mode)).orElse(ItemStack.EMPTY);
+	}
+
+	/**
 	 * 末尾から順にいずれかのアイテムを取り出す
 	 * @param handler
 	 * @param amount
@@ -149,7 +230,7 @@ public class ItemHandlerUtils {
 	public static ItemStack extractLast(IItemHandler handler, int amount) {
 		return extractLast(handler, amount, ItemHandlerMode.EXECUTE);
 	}
-	
+
 	/**
 	 * 末尾から順にいずれかのアイテムを取り出す
 	 * @param handler
@@ -160,8 +241,33 @@ public class ItemHandlerUtils {
 	public static ItemStack extractLast(IItemHandler handler, int amount, ItemHandlerMode mode) {
 		Optional<ItemHandlerSlot> slot = ItemHandlerStream.create(handler)
 				.filter(s -> !s.extractItem(amount, ItemHandlerMode.SIMULATE).isEmpty())
-				.reduce((r, s) -> s);
+				.sorted(Comparator.comparingInt(ItemHandlerSlot::getSlot).reversed())
+				.findFirst();
 		return slot.map(s -> s.extractItem(amount, mode)).orElse(ItemStack.EMPTY);
+	}
+	
+	/**
+	 * 末尾から順にいずれかのアイテムを取り出す
+	 * @param provider
+	 * @param direction
+	 * @param amount
+	 * @return extracted
+	 */
+	public static ItemStack extractLast(ICapabilityProvider provider, Direction direction, int amount) {
+		return extractLast(provider, direction, amount, ItemHandlerMode.EXECUTE);
+	}
+	
+	/**
+	 * 末尾から順にいずれかのアイテムを取り出す
+	 * @param provider
+	 * @param direction
+	 * @param amount
+	 * @param mode
+	 * @return extracted
+	 */
+	public static ItemStack extractLast(ICapabilityProvider provider, Direction direction, int amount, ItemHandlerMode mode) {
+		return provider.getCapability(ForgeCapabilities.ITEM_HANDLER, direction)
+				.map(handler -> extractLast(handler, amount, mode)).orElse(ItemStack.EMPTY);
 	}
 	
 	public static ItemStack setStackInSlot(IItemHandler handler, int slot, ItemStack stack) {
@@ -179,8 +285,20 @@ public class ItemHandlerUtils {
 	 * @param source
 	 * @param dest
 	 * @param amount
+	 * @return moved
+	 */
+	public static ItemStack tryMoveItem(IItemHandler source, IItemHandler dest, int amount) {
+		return tryMoveItem(source, dest, amount, ItemHandlerMode.EXECUTE);
+	}
+	
+	/**
+	 * IItemHandlerから別のIItemHandlerに対してアイテムの移動を試みる
+	 * 移し替えられたItemStack、または移動できなかった場合にItemStack.EMPTYを返す
+	 * @param source
+	 * @param dest
+	 * @param amount
 	 * @param mode
-	 * @return movedItem
+	 * @return moved
 	 */
 	public static ItemStack tryMoveItem(IItemHandler source, IItemHandler dest, int amount, ItemHandlerMode mode) {
 		for (int i = 0; i < source.getSlots(); i++) {
@@ -195,6 +313,63 @@ public class ItemHandlerUtils {
 			}
 		}
 		return ItemStack.EMPTY;
+	}
+
+	/**
+	 * IItemHandlerから別のIItemHandlerに対してアイテムの移動を試みる
+	 * 移し替えられたItemStack、または移動できなかった場合にItemStack.EMPTYを返す
+	 * @param source
+	 * @param dest
+	 * @param direction
+	 * @param amount
+	 * @param mode
+	 * @return moved
+	 */
+	public static ItemStack tryMoveItem(ICapabilityProvider source, Direction direction, IItemHandler dest, int amount) {
+		return tryMoveItem(source, direction, dest, amount, ItemHandlerMode.EXECUTE);
+	}
+	
+	/**
+	 * IItemHandlerから別のIItemHandlerに対してアイテムの移動を試みる
+	 * 移し替えられたItemStack、または移動できなかった場合にItemStack.EMPTYを返す
+	 * @param source
+	 * @param direction
+	 * @param provider
+	 * @param amount
+	 * @param mode
+	 * @return moved
+	 */
+	public static ItemStack tryMoveItem(ICapabilityProvider source, Direction direction, IItemHandler dest, int amount, ItemHandlerMode mode) {
+		return source.getCapability(ForgeCapabilities.ITEM_HANDLER, direction)
+				.map(handler -> tryMoveItem(handler, dest, amount, mode)).orElse(ItemStack.EMPTY);
+	}
+	
+	/**
+	 * IItemHandlerから別のIItemHandlerに対してアイテムの移動を試みる
+	 * 移し替えられたItemStack、または移動できなかった場合にItemStack.EMPTYを返す
+	 * @param source
+	 * @param dest
+	 * @param direction
+	 * @param amount
+	 * @return moved
+	 */
+	public static ItemStack tryMoveItem(IItemHandler source, ICapabilityProvider dest, Direction direction, int amount) {
+		return tryMoveItem(source, dest, direction, amount, ItemHandlerMode.EXECUTE);
+	}
+	
+	/**
+	 * IItemHandlerから別のIItemHandlerに対してアイテムの移動を試みる
+	 * 移し替えられたItemStack、または移動できなかった場合にItemStack.EMPTYを返す
+	 * @param source
+	 * @param dest
+	 * @param direction
+	 * @param amount
+	 * @param mode
+	 * @return moved
+	 */
+	public static ItemStack tryMoveItem(IItemHandler source, ICapabilityProvider dest, Direction direction, int amount, ItemHandlerMode mode) {
+		return dest.getCapability(ForgeCapabilities.ITEM_HANDLER, direction)
+				.map(handler -> tryMoveItem(source, handler, amount, mode)).orElse(ItemStack.EMPTY);
 	}
 	
 	/**

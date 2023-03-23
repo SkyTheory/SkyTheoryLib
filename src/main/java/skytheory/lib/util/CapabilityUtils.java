@@ -14,7 +14,6 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.common.util.LazyOptional;
 
 public class CapabilityUtils {
 
@@ -32,17 +31,6 @@ public class CapabilityUtils {
 		public void deserializeNBT(CompoundTag nbt) {
 		}
 	};
-
-	/**
-	 * Nullableな値からLazyOptionalを作成する
-	 * @param <T>
-	 * @param object
-	 * @return
-	 */
-	public static <T> LazyOptional<T> fromNullable(Object value) {
-		if (value == null) return LazyOptional.empty();
-		return LazyOptional.of(() -> value).cast();
-	}
 
 	/**
 	 * 任意の型のINBTSerializableをwrapし、CompoundTag型のシリアライザを作成する

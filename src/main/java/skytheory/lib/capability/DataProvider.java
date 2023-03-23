@@ -12,7 +12,6 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.common.util.LazyOptional;
-import skytheory.lib.util.CapabilityUtils;
 
 public class DataProvider<T, U extends Tag> implements ICapabilitySerializable<U> {
 
@@ -34,7 +33,7 @@ public class DataProvider<T, U extends Tag> implements ICapabilitySerializable<U
 
 	@Override
 	public <R> @NotNull LazyOptional<R> getCapability(@NotNull Capability<R> cap, @Nullable Direction side) {
-		return this.cap.orEmpty(cap, CapabilityUtils.fromNullable(dataGetter.apply(side)));
+		return this.cap.orEmpty(cap, fromNullable(dataGetter.apply(side)));
 	}
 
 	@Override
@@ -45,6 +44,16 @@ public class DataProvider<T, U extends Tag> implements ICapabilitySerializable<U
 	@Override
 	public void deserializeNBT(U nbt) {
 		serializerGetter.get().deserializeNBT(nbt);
+	}
+
+	/**
+	 * Nullableな値からLazyOptionalを作成する
+	 * @param object
+	 * @return
+	 */
+	public LazyOptional<T> fromNullable(Object value) {
+		if (value == null) return LazyOptional.empty();
+		return LazyOptional.of(() -> value).cast();
 	}
 	
 }
