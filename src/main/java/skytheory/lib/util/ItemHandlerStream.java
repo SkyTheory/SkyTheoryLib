@@ -24,7 +24,7 @@ public class ItemHandlerStream {
 		private final IItemHandler parent;
 		private final int slot;
 		
-		private ItemHandlerSlot(IItemHandler parent, int slot) {
+		public ItemHandlerSlot(IItemHandler parent, int slot) {
 			this.parent = parent;
 			this.slot = slot;
 			if (!(parent instanceof IItemHandlerModifiable)) {

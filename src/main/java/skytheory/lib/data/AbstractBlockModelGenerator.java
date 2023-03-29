@@ -12,24 +12,39 @@ import net.minecraftforge.client.model.generators.BlockModelBuilder;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.ModelFile;
-import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
+import net.minecraftforge.client.model.generators.ModelFile.ExistingModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 
 	protected final String modid;
+	protected final ExistingFileHelper fh;
 	
 	public AbstractBlockModelGenerator(PackOutput gen, String modid, ExistingFileHelper exFileHelper) {
 		super(gen, modid, exFileHelper);
 		this.modid = modid;
+		this.fh = exFileHelper;
 	}
 
 	/**
-	 * 手動でassets/modid/models/blockに配置したモデルから、それを継承したモデルを作成する
+	 * 指定されたモデルを用いて単一BlockStateのブロックを登録する
 	 */
-	public BlockModelBuilder createChildModel(Block block, ResourceLocation location) {
-		ModelFile parent = new UncheckedModelFile(location);
+	public void registerBlockModel(Block block) {
+		ResourceLocation location = ForgeRegistries.BLOCKS.getKey(block);
+		registerBlockModel(block, new ResourceLocation(location.getNamespace(), "block/" + location.getPath()));
+	}
+	
+	public void registerBlockModel(Block block, ResourceLocation location) {
+		ConfiguredModel configured = new ConfiguredModel(new ExistingModelFile(location, fh));
+		this.getVariantBuilder(block).partialState().setModels(configured);
+	}
+	
+	/**
+	 * 指定されたモデルを継承し、テクスチャの指定などを行うためのBlockModelBuilderを返す
+	 */
+	public BlockModelBuilder extendBlockModel(Block block, ResourceLocation location) {
+		ModelFile parent = new ExistingModelFile(location, fh);
 		BlockModelBuilder model = this.models().getBuilder(this.getRegistryKey(block).getPath()).parent(parent);
 		return model;
 	}
@@ -39,7 +54,7 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 	}
 	
 	public void layeredOre(Block block, ResourceLocation baseLocation, ResourceLocation blockLocation) {
-		BlockModelBuilder model = this.createChildModel(block, new ResourceLocation("stlib", "block/layered_block"))
+		BlockModelBuilder model = this.extendBlockModel(block, new ResourceLocation("stlib", "block/layered_block"))
 		.texture("base", baseLocation)
 		.texture("mineral", blockLocation)
 		.renderType(new ResourceLocation("translucent"));
@@ -121,7 +136,7 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 		registerModels();
 		List<Block> entries = this.getAllEntries();
 		registeredBlocks.keySet().forEach(entries::remove);
-		entries.forEach(this::cubeAll);
+		entries.forEach(this::simpleBlock);
 	}
 	
 	protected List<Block> getAllEntries() {

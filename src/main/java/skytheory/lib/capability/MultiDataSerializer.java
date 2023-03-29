@@ -15,15 +15,10 @@ public class MultiDataSerializer implements INBTSerializable<ListTag> {
 
 	protected final List<INBTSerializable<CompoundTag>> seriarizers; 
 
-	public MultiDataSerializer(List<?> handlers) {
+	public MultiDataSerializer(List<? extends INBTSerializable<?>> handlers) {
 		this.seriarizers = handlers.stream()
-				.filter(INBTSerializable.class::isInstance)
-				.map(INBTSerializable.class::cast)
-				.map(CapabilityUtils::adjustSerilizer)
+				.map(CapabilityUtils::adjustSerializer)
 				.toList();
-		if (this.seriarizers.size() != handlers.size()) {
-			LogUtils.getLogger().warn("Serializer was created from an Object that does not implement INBTSerializable. Some data will not be saved.");
-		}
 	}
 
 	@Override
@@ -38,13 +33,13 @@ public class MultiDataSerializer implements INBTSerializable<ListTag> {
 		if (nbt.getElementType() == Tag.TAG_COMPOUND) {
 			Iterator<INBTSerializable<CompoundTag>> it = this.seriarizers.iterator();
 			nbt.stream()
-			.limit(Math.min(nbt.size(), seriarizers.size()))
+			.limit(seriarizers.size())
 			.map(CompoundTag.class::cast)
 			.forEach(it.next()::deserializeNBT);
 			if (nbt.size() != seriarizers.size()) {
 				LogUtils.getLogger().error("Deserialization maybe failed; Tags and handlers count are different.");
 			}
-		} else if (nbt.getElementType() != 0) {
+		} else if (!nbt.isEmpty()) {
 			LogUtils.getLogger().error("Deserialization skipped; NBT type is invalid.");
 		}
 	}
