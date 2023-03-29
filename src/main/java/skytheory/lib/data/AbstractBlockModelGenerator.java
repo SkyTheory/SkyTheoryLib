@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.renderer.block.model.BlockModel.GuiLight;
-import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.client.model.generators.BlockModelBuilder;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
@@ -73,37 +73,37 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 				.texture("particle", particle)
 				.guiLight(GuiLight.SIDE)
 				.transforms()
-				.transform(TransformType.GUI)
+				.transform(ItemDisplayContext.GUI)
 				.rotation(30.0f, 225.0f, 0.0f)
 				.translation(0.0f, 0.0f, 0.0f)
 				.scale(0.625f, 0.625f, 0.625f)
 				.end()
-				.transform(TransformType.GROUND)
+				.transform(ItemDisplayContext.GROUND)
 				.rotation(0.0f, 0.0f, 0.0f)
 				.translation(0.0f, 0.0f, 0.0f)
 				.scale(0.25f, 0.25f, 0.25f)
 				.end()
-				.transform(TransformType.FIXED)
+				.transform(ItemDisplayContext.FIXED)
 				.rotation(0.0f, 0.0f, 0.0f)
 				.translation(0.0f, 0.0f, 0.0f)
 				.scale(0.5f, 0.5f, 0.5f)
 				.end()
-				.transform(TransformType.THIRD_PERSON_RIGHT_HAND)
+				.transform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND)
 				.rotation(75.0f, 45.0f, 0.0f)
 				.translation(0.0f, 2.5f, 0.0f)
 				.scale(0.375f, 0.375f, 0.375f)
 				.end()
-				.transform(TransformType.THIRD_PERSON_LEFT_HAND)
+				.transform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND)
 				.rotation(75.0f, 225.0f, 0.0f)
 				.translation(0.0f, 2.5f, 0.0f)
 				.scale(0.375f, 0.375f, 0.375f)
 				.end()
-				.transform(TransformType.FIRST_PERSON_RIGHT_HAND)
+				.transform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND)
 				.rotation(0.0f, 45.0f, 0.0f)
 				.translation(0.0f, 2.5f, 0.0f)
 				.scale(0.4f, 0.4f, 0.4f)
 				.end()
-				.transform(TransformType.FIRST_PERSON_LEFT_HAND)
+				.transform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND)
 				.rotation(0.0f, 45.0f, 0.0f)
 				.translation(0.0f, 2.5f, 0.0f)
 				.scale(0.4f, 0.4f, 0.4f)

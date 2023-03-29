@@ -11,8 +11,8 @@ import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import skytheory.lib.client.model.ModelSetup;
 
@@ -26,7 +26,7 @@ public class SimpleBEWLR extends BlockEntityWithoutLevelRenderer {
 	}
 
 	@Override
-	public void renderByItem(ItemStack stack, ItemTransforms.TransformType type, PoseStack pPoseStack, MultiBufferSource pBufferSource, int pPackedLight, int pPackedOverlay) {
+	public void renderByItem(ItemStack stack, ItemDisplayContext ctx, PoseStack pPoseStack, MultiBufferSource pBufferSource, int pPackedLight, int pPackedOverlay) {
 		ModelSelector selector = null;
 		if (stack.getItem() instanceof ModelSelector itemModelSelector) {
 			selector = itemModelSelector;
