@@ -1,4 +1,4 @@
-package skytheory.lib.menu;
+package skytheory.lib.gui;
 
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -8,6 +8,7 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.ItemHandlerHelper;
 
 public abstract class ContainerMenuBase extends AbstractContainerMenu {
 
@@ -40,6 +41,30 @@ public abstract class ContainerMenuBase extends AbstractContainerMenu {
 			}
 		}
 		super.clicked(pSlotId, pButton, pClickType, pPlayer);
+	}
+
+	@Override
+	protected boolean moveItemStackTo(ItemStack pStack, int pStartIndex, int pEndIndex, boolean pReverseDirection) {
+		if (pStack.isEmpty()) return false;
+		boolean moved = false;
+		int length = pEndIndex - pStartIndex;
+		for (int i = 0; i < length; i++) {
+			int offset = pReverseDirection ? length - i - 1 : i;
+			int index = pStartIndex + offset;
+			if (filterSlots.contains(index)) continue;
+			Slot slot = this.slots.get(index);
+			ItemStack slotItem = slot.getItem();
+			if (slotItem.isEmpty() || ItemHandlerHelper.canItemStacksStack(pStack, slotItem)) {
+				int quantity = Math.min(slot.getMaxStackSize() - slotItem.getCount(), pStack.getCount());
+				if (quantity > 0) {
+					slot.set(ItemHandlerHelper.copyStackWithSize(pStack, slotItem.getCount() + quantity));
+					pStack.shrink(quantity);
+					moved = true;
+					if (pStack.isEmpty()) break;
+				}
+			}
+		}
+		return moved;
 	}
 
 	public boolean canDragTo(Slot pSlot) {

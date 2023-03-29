@@ -12,17 +12,19 @@ import net.minecraftforge.client.model.generators.BlockModelBuilder;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.ModelFile;
-import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
+import net.minecraftforge.client.model.generators.ModelFile.ExistingModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 
 	protected final String modid;
+	protected final ExistingFileHelper fh;
 	
 	public AbstractBlockModelGenerator(PackOutput gen, String modid, ExistingFileHelper exFileHelper) {
 		super(gen, modid, exFileHelper);
 		this.modid = modid;
+		this.fh = exFileHelper;
 	}
 
 	/**
@@ -30,7 +32,11 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 	 */
 	public void registerBlockModel(Block block) {
 		ResourceLocation location = ForgeRegistries.BLOCKS.getKey(block);
-		ConfiguredModel configured = new ConfiguredModel(new UncheckedModelFile(location));
+		registerBlockModel(block, new ResourceLocation(location.getNamespace(), "block/" + location.getPath()));
+	}
+	
+	public void registerBlockModel(Block block, ResourceLocation location) {
+		ConfiguredModel configured = new ConfiguredModel(new ExistingModelFile(location, fh));
 		this.getVariantBuilder(block).partialState().setModels(configured);
 	}
 	
@@ -38,7 +44,7 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 	 * 指定されたモデルを継承し、テクスチャの指定などを行うためのBlockModelBuilderを返す
 	 */
 	public BlockModelBuilder extendBlockModel(Block block, ResourceLocation location) {
-		ModelFile parent = new UncheckedModelFile(location);
+		ModelFile parent = new ExistingModelFile(location, fh);
 		BlockModelBuilder model = this.models().getBuilder(this.getRegistryKey(block).getPath()).parent(parent);
 		return model;
 	}

@@ -1,103 +1,195 @@
 package skytheory.lib.capability.itemhandler;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 import org.jetbrains.annotations.NotNull;
 
-import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.util.INBTSerializable;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
+import skytheory.lib.util.ItemHandlerStream.ItemHandlerSlot;
 
-public class InventoryHandler extends ItemStackHandler {
+public class InventoryHandler extends AbstractList<ItemHandlerSlot> implements IItemHandlerModifiable, INBTSerializable<CompoundTag> {
 
-	private final List<ItemHandlerListener> listeners = new ArrayList<>();
+	private final ItemStack[] items;
+	private final List<IntConsumer> changedListener;
+	private final List<Runnable> loadListener;
 
 	public InventoryHandler(int size) {
-		super(size);
+		this.items = new ItemStack[size];
+		this.clear();
+		this.changedListener = new ArrayList<>();
+		this.loadListener = new ArrayList<>();
 	}
 
-	public void addListener(ItemHandlerListener listener) {
-		if (!listeners.contains(listener)) this.listeners.add(listener);
-	}
-	public boolean canInsert(int slot, ItemStack stack) {
-		return true;
+	@Override
+	public int size() {
+		return items.length;
 	}
 
-	private boolean canExtract(int slot) {
-		return true;
+	@Override
+	public ItemHandlerSlot get(int index) {
+		return new ItemHandlerSlot((IItemHandler)this, index);
+	}
+
+	@Override
+	public void clear() {
+		for (int i = 0; i < size(); i++) {
+			items[i] = ItemStack.EMPTY;
+		}
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return this.stream().allMatch(ItemHandlerSlot::isEmpty);
+	}
+
+	@Override
+	public int getSlots() {
+		return size();
+	}
+
+	@Override
+	public @NotNull ItemStack getStackInSlot(int slot) {
+		return items[slot];
 	}
 
 	@Override
 	public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-		if (!this.canInsert(slot, stack)) return stack.copy();
-		return super.insertItem(slot, stack, simulate);
+		if (stack.isEmpty()) return ItemStack.EMPTY;
+		if (!isItemValid(slot, stack)) return stack;
+		ItemStack current = items[slot];
+		if (!current.isEmpty() && !ItemHandlerHelper.canItemStacksStack(current, stack)) return stack;
+		int limit = Math.min(getSlotLimit(slot), stack.getMaxStackSize());
+		int quantity = Math.min(limit - current.getCount(), stack.getCount());
+		if (quantity <= 0) return ItemStack.EMPTY;
+		ItemStack remain = ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - quantity);
+		if (!simulate) {
+			ItemStack contents = ItemHandlerHelper.copyStackWithSize(stack, current.getCount() + quantity);
+			items[slot] = contents.isEmpty() ? ItemStack.EMPTY : contents;
+			ItemStack moved = ItemHandlerHelper.copyStackWithSize(stack, quantity);
+			this.onInserted(slot, moved);
+		}
+		return remain;
 	}
 
 	@Override
 	public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-		if (!this.canExtract(slot)) return ItemStack.EMPTY;
-		return super.extractItem(slot, amount, simulate);
-	}
-	@Override
-	protected void onContentsChanged(int slot) {
-		this.listeners.forEach(listener -> listener.onItemHandlerChanged(this, slot));
-	}
-
-	public IItemHandler insertOnly() {
-		return new ItemHandlerWrapperInsertOnly(this);
-	}
-
-	public IItemHandler extractOnly() {
-		return new ItemHandlerWrapperExtractOnly(this);
-	}
-
-	public List<ItemStack> setSizeWithOldContents(int size) {
-		NonNullList<ItemStack> oldContents = this.stacks;
-		List<ItemStack> remains = new ArrayList<>();
-		this.stacks = NonNullList.withSize(size, ItemStack.EMPTY);
-		for (int i = 0; i < Math.min(oldContents.size(), size); i++) {
-			this.setStackInSlot(i, oldContents.get(i));
+		if (amount <= 0) return ItemStack.EMPTY;
+		ItemStack current = items[slot];
+		if (current.isEmpty()) return ItemStack.EMPTY;
+		int quantity = Math.min(current.getCount(), amount);
+		ItemStack extracted = ItemHandlerHelper.copyStackWithSize(current, quantity);
+		if (!simulate) {
+			current.shrink(quantity);
+			if (current.isEmpty()) items[slot] = ItemStack.EMPTY;
+			this.onExtracted(slot, extracted);
 		}
-		for (int i = size; i < oldContents.size(); i++) {
-			remains.add(oldContents.get(i));
-		}
-		return remains;
+		return extracted;
 	}
 
 	@Override
-	public CompoundTag serializeNBT()  {
-		ListTag nbtTagList = new ListTag();
-		for (int i = 0; i < stacks.size(); i++) {
-			ItemStack stack = stacks.get(i);
-			if (!stacks.isEmpty()) {
-				CompoundTag itemTag = new CompoundTag();
-				itemTag.putInt("Slot", i);
-				stack.save(itemTag);
-				nbtTagList.add(itemTag);
-			}
-		}
-		CompoundTag nbt = new CompoundTag();
-		nbt.put("Items", nbtTagList);
-		return nbt;
+	public int getSlotLimit(int slot) {
+		return 64;
+	}
+
+	@Override
+	public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+		return true;
+	}
+
+	@Override
+	public void setStackInSlot(int slot, @NotNull ItemStack stack) {
+		stack = stack.isEmpty() ? ItemStack.EMPTY : stack.copy();
+		items[slot] = stack;
+		onSet(slot, stack.copy());
+	}
+
+	@Override
+	public CompoundTag serializeNBT() {
+		CompoundTag tag = new CompoundTag();
+		ListTag items = this.stream()
+				.map(ItemHandlerSlot::getStackInSlot)
+				.map(ItemStack::serializeNBT)
+				.collect(ListTag::new, ListTag::add, ListTag::addAll);
+		tag.put("Items", items);
+		return tag;
 	}
 
 	@Override
 	public void deserializeNBT(CompoundTag nbt) {
-		ListTag tagList = nbt.getList("Items", Tag.TAG_COMPOUND);
-		for (Tag tag : tagList) {
-			if (tag instanceof CompoundTag itemTags) {
-				int slot = itemTags.getInt("Slot");
-				if (slot >= 0 && slot < stacks.size()) {
-					stacks.set(slot, ItemStack.of(itemTags));
-				}
-			}
-		}
+		Iterator<ItemStack> itr = nbt.getList("Items", Tag.TAG_COMPOUND).stream()
+		.map(CompoundTag.class::cast)
+		.map(ItemStack::of)
+		.iterator();
+		for (int i = 0; i < size(); i++) items[i] = itr.hasNext() ? itr.next() : ItemStack.EMPTY;
 		onLoad();
 	}
 
+	public void addChangedListener(IntConsumer action) {
+		this.changedListener.add(action);
+	}
+	
+	public void addChangedListener(Runnable action) {
+		this.changedListener.add(value -> action.run());
+	}
+
+	public void addLoadListener(Runnable action) {
+		this.loadListener.add(action);
+	}
+	
+	/**
+	 * アイテムが搬入された時に呼ばれる
+	 * 引数はインデックスとハンドラに搬入されたアイテムのコピー
+	 * @param slot
+	 * @param A copy of the ItemStack inserted into this. 
+	 */
+	protected void onInserted(int slot, ItemStack item) {
+		this.onChanged(slot);
+	}
+
+	/**
+	 * アイテムが搬出された時に呼ばれる
+	 * 引数はインデックスとハンドラに搬出されたアイテムのコピー
+	 * @param slot
+	 * @param A copy of the ItemStack extracted from this.
+	 */
+	protected void onExtracted(int slot, ItemStack item) {
+		this.onChanged(slot);
+	}
+
+	/**
+	 * アイテムが設定された時に呼ばれる
+	 * 設定はインデックスとハンドラに設定されたアイテムのコピー
+	 * @param slot
+	 * @param  A copy of the ItemStack set in the slot.
+	 */
+	protected void onSet(int slot, ItemStack item) {
+		this.onChanged(slot);
+	}
+	
+	/**
+	 * 内容に変化があった時に呼ばれる
+	 * @param slot
+	 */
+	protected void onChanged(int slot) {
+		this.changedListener.forEach(t -> t.accept(slot));
+	}
+	
+	/**
+	 * NBTからデータを読み込んだ時に呼ばれる
+	 */
+	protected void onLoad() {
+		this.loadListener.forEach(t -> t.run());
+	}
+	
 }
