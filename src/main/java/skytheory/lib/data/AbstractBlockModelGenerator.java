@@ -13,6 +13,7 @@ import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.client.model.generators.ModelFile.ExistingModelFile;
+import net.minecraftforge.client.model.generators.ModelFile.UncheckedModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -54,7 +55,8 @@ public abstract class AbstractBlockModelGenerator extends BlockStateProvider {
 	}
 	
 	public void layeredOre(Block block, ResourceLocation baseLocation, ResourceLocation blockLocation) {
-		BlockModelBuilder model = this.extendBlockModel(block, new ResourceLocation("stlib", "block/layered_block"))
+		ModelFile parent = new UncheckedModelFile(new ResourceLocation("stlib", "block/layered_block"));
+		BlockModelBuilder model = this.models().getBuilder(this.getRegistryKey(block).getPath()).parent(parent)
 		.texture("base", baseLocation)
 		.texture("mineral", blockLocation)
 		.renderType(new ResourceLocation("translucent"));
